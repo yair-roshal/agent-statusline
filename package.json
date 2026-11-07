@@ -1,0 +1,33 @@
+{
+  "name": "agent-statusline",
+  "version": "0.1.0",
+  "description": "A configurable status line for Claude Code (and Codex next): pick segments with arrows + space, limits forecast, prompt-cache timer, zmanim and more. Zero dependencies.",
+  "bin": {
+    "agent-statusline": "bin/agent-statusline.js"
+  },
+  "main": "src/render.js",
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node test/run.js",
+    "preview": "node bin/agent-statusline.js preview --sample"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "claude-code",
+    "statusline",
+    "status-line",
+    "codex",
+    "cli",
+    "terminal",
+    "powerline",
+    "ai-agent"
+  ],
+  "license": "MIT"
+}
