@@ -36,6 +36,7 @@ function normalize(input) {
     cwd: ws.current_dir || input.cwd || process.cwd(),
     projectDir: ws.project_dir || ws.current_dir || input.cwd || null,
     repo: ws.repo || null,
+    sessionId: input.session_id || null,
     sessionName: input.session_name || null,
     version: input.version || null,
     outputStyle: (input.output_style && input.output_style.name) || null,

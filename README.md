@@ -3,21 +3,22 @@
 A status line for **Claude Code** that you configure with arrows and space — no JSON editing.
 Zero dependencies, Node ≥ 18. **Codex** support is next.
 
-```
-◆ Opus 5.5 · medium 🧠 │ 📁 my-app/src │  dev ●3 ↑1 │ ✎ +214 −37 │ 💰 $1.84 · $2.70/h
-◔ ctx ▰▰▱▱▱▱▱▱▱▱ 18% · 182k/1M │ ◱ 5h ▰▰▰▰▰▰▱▱▱▱ 64% · reset 1h 50m │ ◑ week ▰▰▰▰▰▰▱▱▱▱ 58% · reset 3d 4h
-⏳ 5h 100% at 15:42 │ ✱ 42% left ≈ 3.0 windows · 13%/day │ 🔥 cache 47m · hit 91%
-```
+![agent-statusline in Claude Code](docs/screenshot.png)
 
 ## Install
 
+You need [Node.js](https://nodejs.org) 18 or newer.
+
 ```bash
-npm i -g agent-statusline      # or: git clone … && npm link
-agent-statusline install       # connects to Claude Code, backs up ~/.claude/settings.json
-agent-statusline               # pick what to show
+npm i -g github:yair-roshal/agent-statusline   # 1. download
+agent-statusline install                       # 2. connect to Claude Code (backs up ~/.claude/settings.json)
+agent-statusline                               # 3. pick what to show
 ```
 
-`agent-statusline uninstall` puts your previous status line back.
+The new status line shows up on the next redraw — no restart needed.
+For the arrows in the cells, use a terminal font with Powerline glyphs (any Nerd Font, MesloLGS, JetBrains Mono NL…).
+
+Update: run the first command again. `agent-statusline uninstall` puts your previous status line back.
 
 ## Picking segments
 
@@ -30,7 +31,7 @@ Run `agent-statusline` and you get one screen:
 | `→` `←` | move to the next / previous line |
 | `[` `]` | reorder within a line |
 | `p` | cycle presets |
-| `s` | style: `plain`, `powerline`, `capsule` |
+| `s` | style: `cells` (default), `plain`, `powerline`, `capsule` |
 | `t` | theme: `default`, `nord`, `sunset`, `mono` |
 | `g` | language: `en`, `ru` |
 | `i` | icons on/off |

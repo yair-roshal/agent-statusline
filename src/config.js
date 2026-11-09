@@ -17,7 +17,7 @@ const DEFAULT_OPTIONS = {
 };
 
 function defaults() {
-  return { preset: 'default', style: 'plain', theme: 'default', lines: clone(presets.default.lines), options: { ...DEFAULT_OPTIONS } };
+  return { preset: 'default', style: 'cells', theme: 'default', lines: clone(presets.default.lines), options: { ...DEFAULT_OPTIONS } };
 }
 
 const clone = (x) => JSON.parse(JSON.stringify(x));

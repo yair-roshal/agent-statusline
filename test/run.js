@@ -44,10 +44,12 @@ test('every segment renders with full data and survives empty input', () => {
 });
 
 test('russian language', () => {
-  const cfg = { ...cfgLib.defaults(), lines: [['limit5h', 'windowsLeft']], options: { ...cfgLib.DEFAULT_OPTIONS, lang: 'ru' } };
+  const cfg = { ...cfgLib.defaults(), style: 'plain', lines: [['limit5h', 'windowsLeft']], options: { ...cfgLib.DEFAULT_OPTIONS, lang: 'ru' } };
   const out = strip(render(sampleClaudeInput(), cfg, { color: false }));
   assert.ok(out.includes('сброс 1ч'), out);
   assert.ok(out.includes('осталось 42%'), out);
+  const cells = strip(render(sampleClaudeInput(), { ...cfg, style: 'cells' }, { color: true }));
+  assert.ok(/64% \(1ч \d+м\)/.test(cells) && cells.includes('Окно 5ч'), cells);
 });
 
 test('forecast: fast burn hits 100% before reset, slow burn lasts', () => {

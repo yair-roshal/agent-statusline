@@ -21,8 +21,11 @@ function renderSegment(id, d, c) {
   try {
     const r = s.render(d, c);
     if (!r || !r.text) return null;
-    const text = c.o.icons !== false && r.icon ? `${r.icon} ${r.text}` : r.text;
-    return { id, text, level: r.level || 'ok' };
+    const icons = c.o.icons !== false;
+    const text = icons && r.icon ? `${r.icon} ${r.text}` : r.text;
+    const cell = r.cell && { ...r.cell, text: icons && r.icon ? `${r.icon} ${r.cell.text}` : r.cell.text };
+    const rich = r.rich && r.rich.filter((x) => icons || !x.icon);
+    return { id, text, level: r.level || 'ok', cell, rich };
   } catch {
     return null; // one broken segment must never break the whole line
   }
@@ -60,7 +63,40 @@ function paintCapsule(parts, cfg, color) {
     .join(' ');
 }
 
-const styles = { plain: paintPlain, powerline: paintPowerline, capsule: paintCapsule };
+// "cells": truecolor blocks with an arrow and a grey caption after them
+// (limits / context), colored text for everything else.
+const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)).join(';');
+const fgx = (h) => `${ESC}38;2;${hex(h)}m`;
+const bgx = (h) => `${ESC}48;2;${hex(h)}m`;
+const CELL = {
+  limit5h: ['#cfe6f5', '#3a5c72'], limitWeek: ['#d8eefb', '#48677c'], context: ['#ffffff', '#6a6a6a'],
+  shells: ['#1a1a1a', '#ffb454'], warn: ['#4a3c00', '#f5e6a8'], crit: ['#5c1a16', '#f2b8b5'],
+};
+const INK = {
+  gold: '#ffd75f', sky: '#87d7ff', orange: '#ff8f6b', violet: '#d7afff', sand: '#f5deb3',
+  green: '#a6e3a1', yellow: '#f9e2af', red: '#f38ba8', grey: '#a8a8a8', dim: '#6c6c6c', label: '#9a9a9a',
+};
+
+function paintCells(parts, cfg, color) {
+  if (!color) {
+    return parts.map((p) => (p.cell ? `[${p.cell.text}] ${p.cell.label}` : p.rich ? p.rich.map((x) => x.t).join('') : p.text)).join('  ');
+  }
+  return parts
+    .map((p) => {
+      if (p.cell) {
+        const [f, b] = (p.id !== 'shells' && p.level !== 'ok' && CELL[p.level]) || CELL[p.id] || CELL.context;
+        const B = p.cell.bold ? `${ESC}1m` : '';
+        return `${bgx(b)}${fgx(f)}${B} ${p.cell.text} ${reset}${fgx(b)}\uE0B0${reset}${B}${fgx(INK[p.cell.labelColor] || INK.label)}${p.cell.label}${reset}`;
+      }
+      if (p.rich) {
+        return p.rich.map((x) => `${fgx(INK[x.c] || INK.grey)}${x.t}${reset}`).join('');
+      }
+      return `${fg(colorsFor(cfg.theme, p.id, p.level)[0])}${p.text}${reset}`;
+    })
+    .join('  ');
+}
+
+const styles = { cells: paintCells, plain: paintPlain, powerline: paintPowerline, capsule: paintCapsule };
 
 /** input: raw agent JSON; returns the full multi-line string. */
 function render(input, cfg, { now = Date.now(), agent, color = !process.env.NO_COLOR } = {}) {

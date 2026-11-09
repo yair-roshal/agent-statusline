@@ -107,7 +107,8 @@ def({
     const pct = x.pct ?? 0;
     let t = `${c.w.ctx} ${f.bar(pct, c.o.barWidth, c.o.barStyle)} ${Math.round(pct)}%`;
     if (x.used != null && x.size) t += ` · ${f.tokens(x.used)}/${f.tokens(x.size)}`;
-    return { icon: '◔', text: t, level: f.level(pct, 50, 80) };
+    const cell = { text: x.used != null ? `${x.used.toLocaleString('en-US')} (${Math.round(pct)}%)` : `${Math.round(pct)}%`, label: c.w.labelContext };
+    return { icon: '◔', text: t, level: f.level(pct, 50, 80), cell };
   },
 });
 
@@ -121,8 +122,13 @@ for (const [id, key, label, icon] of [['limit5h', 'five', 'window5h', '◱'], ['
       const l = d.limits[key];
       if (!l) return null;
       let t = `${c.w[label]} ${f.bar(l.pct, c.o.barWidth, c.o.barStyle)} ${Math.round(l.pct)}%`;
-      if (l.resetsAt && l.resetsAt > c.now) t += ` · ${c.w.reset} ${f.dur(l.resetsAt - c.now, c.w.units)}`;
-      return { icon, text: t, level: f.level(l.pct, 70, 90) };
+      const left = l.resetsAt && l.resetsAt > c.now ? f.dur(l.resetsAt - c.now, c.w.units) : '';
+      if (left) t += ` · ${c.w.reset} ${left}`;
+      const cell = {
+        text: `${f.bar(l.pct, c.o.barWidth, 'shade')} ${Math.round(l.pct)}%${left ? ` (${left})` : ''}`,
+        label: key === 'five' ? c.w.labelWindow5h : c.w.labelWeek,
+      };
+      return { icon, text: t, level: f.level(l.pct, 70, 90), cell };
     },
   });
 }
@@ -169,7 +175,11 @@ def({
       const days = Math.max(1, (wk.resetsAt - c.now) / f.DAY);
       t += ` · ${Math.round(left / days)}%${c.w.perDay}`;
     }
-    return { icon: '✱', text: t, level: n < 1 ? 'crit' : n < 2 ? 'warn' : 'ok' };
+    const lvl = n < 1 ? 'crit' : n < 2 ? 'warn' : 'ok';
+    const col = lvl === 'crit' ? 'red' : lvl === 'warn' ? 'yellow' : 'green';
+    const long = c.w.windowsLeftLong(per, Math.round(left), Math.round(n * 100), n.toFixed(1));
+    const perDay = t.includes(' · ') ? t.slice(t.lastIndexOf(' · ')) : '';
+    return { icon: '✱', text: t, level: lvl, rich: [{ t: '✱ ', c: col, icon: true }, { t: long + perDay, c: col }] };
   },
 });
 
@@ -242,7 +252,19 @@ def({
     const next = [[c.w.sunrise, z.sunrise], [c.w.sunset, z.sunset], [c.w.tzeit, z.tzeit]].find(([, ms]) => ms && ms > c.now);
     if (next) parts.push(`${c.w.next}: ${next[0]} ${c.w.in} ${f.dur(next[1] - c.now, c.w.units)}`);
     if (city.name && c.o.showCity !== false) parts.push(city.name);
-    return { icon: '', text: parts.join(' · '), level: 'gold' };
+    const dot = { t: ' · ', c: 'dim' };
+    const shabbat = wd === 5 && z.sunset
+      ? `${c.w.candles} ${t(z.sunset - city.candles * f.MIN)}`
+      : daysLeft === 0 ? c.w.shabbatToday : daysLeft === 1 ? c.w.shabbatTomorrow : c.w.shabbatIn(daysLeft);
+    const rich = [
+      { t: '🕯 ', c: 'gold', icon: true }, { t: shabbat, c: 'gold' }, dot,
+      { t: '☀ ', c: 'sky', icon: true }, { t: `${c.w.sunrise} ${t(z.sunrise)}`, c: 'sky' }, dot,
+      { t: '🌇 ', c: 'orange', icon: true }, { t: `${c.w.sunset} ${t(z.sunset)}`, c: 'orange' }, dot,
+      { t: '✨ ', c: 'violet', icon: true }, { t: `${c.w.tzeit} ${t(z.tzeit)}`, c: 'violet' },
+    ];
+    if (city.name && c.o.showCity !== false) rich.push({ t: ` (${city.name})`, c: 'grey', plain: true });
+    if (next && c.o.zmanimNext !== false) rich.push(dot, { t: `${c.w.next}: ${next[0]} ${c.w.in} ${f.dur(next[1] - c.now, c.w.units)}`, c: 'grey', plain: true });
+    return { icon: '', text: parts.join(' · '), level: 'gold', rich };
   },
 });
 
@@ -257,7 +279,9 @@ def({
     if (!list.length) return null;
     const day = Math.floor((c.now - new Date(c.now).getTimezoneOffset() * f.MIN) / f.DAY);
     const [text, author] = list[day % list.length];
-    return { icon: '📜', text: `“${text}”${author ? ` — ${author}` : ''}`, level: 'sand' };
+    const rich = [{ t: '📜 ', c: 'sand', icon: true }, { t: `“${text}”`, c: 'sand' }];
+    if (author) rich.push({ t: ` — ${author}`, c: 'grey' });
+    return { icon: '📜', text: `“${text}”${author ? ` — ${author}` : ''}`, level: 'sand', rich };
   },
 });
 
@@ -289,6 +313,36 @@ def({
       } catch { return ''; }
     });
     return out ? { icon: '', text: out.split('\n')[0] } : null;
+  },
+});
+
+// Background shells Claude Code started (the "· 1 shell" in its footer):
+// bash processes under the claude process that source a shell snapshot.
+function countShells() {
+  try {
+    const rows = execFileSync('ps', ['-axo', 'pid=,ppid=,command='], { encoding: 'utf8', timeout: 800, stdio: ['ignore', 'pipe', 'ignore'] })
+      .split('\n').map((l) => l.trim().match(/^(\d+)\s+(\d+)\s+(.*)$/)).filter(Boolean)
+      .map((m) => ({ pid: +m[1], ppid: +m[2], cmd: m[3] }));
+    const byPid = new Map(rows.map((r) => [r.pid, r]));
+    let cur = byPid.get(process.pid), claude = null;
+    for (let i = 0; cur && i < 8; i++) {
+      if (/(^|\/)claude(\s|$)/.test(cur.cmd)) { claude = cur.pid; break; }
+      cur = byPid.get(cur.ppid);
+    }
+    if (!claude) return 0;
+    return rows.filter((r) => r.ppid === claude && r.cmd.includes('shell-snapshots/snapshot-') && !r.cmd.includes('agent-statusline')).length;
+  } catch { return 0; }
+}
+
+def({
+  id: 'shells', group: 'session',
+  desc: { en: 'Background shells running (highlighted)', ru: 'Запущенные фоновые shell (с подсветкой)' },
+  render(d, c) {
+    if (process.platform === 'win32') return null;
+    const n = cached(`shells-${d.sessionId || process.ppid}`, c.o.shellsCacheMs ?? 3000, countShells);
+    if (!n) return null;
+    const text = c.w.shells(n);
+    return { icon: '▶', text, level: 'warn', cell: { text, label: c.w.labelShells, bold: true, labelColor: 'gold' } };
   },
 });
 
