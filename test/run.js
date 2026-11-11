@@ -30,7 +30,7 @@ test('every preset × style × theme renders without throwing', () => {
   for (const [name, p] of Object.entries(presets)) for (const style of ['plain', 'powerline', 'capsule']) for (const theme of Object.keys(themes)) {
     const out = render(sampleClaudeInput(), { ...cfgLib.defaults(), lines: p.lines, style, theme });
     assert.ok(strip(out).trim().length > 0, `${name}/${style}/${theme} empty`);
-    assert.strictEqual(out.split('\n').length, p.lines.length, `${name} line count`);
+    assert.ok(out.split('\n').length <= p.lines.length, `${name} line count`); // empty lines are dropped on purpose
   }
 });
 

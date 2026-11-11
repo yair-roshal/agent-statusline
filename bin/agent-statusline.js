@@ -39,7 +39,7 @@ function renderMode() {
     try { ensureDir(paths.cacheDir); fs.writeFileSync(paths.lastInput, raw); } catch {}
   }
   const cfg = cfgLib.load();
-  process.stdout.write(render(input, cfg) + '\n');
+  process.stdout.write(require('../src/fit').fit(render(input, cfg)) + '\n');
 }
 
 function preview() {

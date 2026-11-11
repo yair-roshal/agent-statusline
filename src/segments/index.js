@@ -246,9 +246,9 @@ def({
     const t = (ms) => (ms ? f.clock(ms, city.tz) : '—');
     const parts = [];
     const daysLeft = 6 - wd;
-    if (wd === 5 && z.sunset) parts.push(`🕯️ ${c.w.candles} ${t(z.sunset - city.candles * f.MIN)}`);
-    else parts.push(`🕯️ ${daysLeft === 0 ? c.w.shabbatToday : daysLeft === 1 ? c.w.shabbatTomorrow : c.w.shabbatIn(daysLeft)}`);
-    parts.push(`☀️ ${t(z.sunrise)}`, `🌇 ${t(z.sunset)}`, `✨ ${t(z.tzeit)}`);
+    if (wd === 5 && z.sunset) parts.push(`🪔 ${c.w.candles} ${t(z.sunset - city.candles * f.MIN)}`);
+    else parts.push(`🪔 ${daysLeft === 0 ? c.w.shabbatToday : daysLeft === 1 ? c.w.shabbatTomorrow : c.w.shabbatIn(daysLeft)}`);
+    parts.push(`🌅 ${t(z.sunrise)}`, `🌇 ${t(z.sunset)}`, `✨ ${t(z.tzeit)}`);
     const next = [[c.w.sunrise, z.sunrise], [c.w.sunset, z.sunset], [c.w.tzeit, z.tzeit]].find(([, ms]) => ms && ms > c.now);
     if (next) parts.push(`${c.w.next}: ${next[0]} ${c.w.in} ${f.dur(next[1] - c.now, c.w.units)}`);
     if (city.name && c.o.showCity !== false) parts.push(city.name);
@@ -257,8 +257,8 @@ def({
       ? `${c.w.candles} ${t(z.sunset - city.candles * f.MIN)}`
       : daysLeft === 0 ? c.w.shabbatToday : daysLeft === 1 ? c.w.shabbatTomorrow : c.w.shabbatIn(daysLeft);
     const rich = [
-      { t: '🕯️ ', c: 'gold', icon: true }, { t: shabbat, c: 'gold' }, dot,
-      { t: '☀️ ', c: 'sky', icon: true }, { t: `${c.w.sunrise} ${t(z.sunrise)}`, c: 'sky' }, dot,
+      { t: '🪔 ', c: 'gold', icon: true }, { t: shabbat, c: 'gold' }, dot,
+      { t: '🌅 ', c: 'sky', icon: true }, { t: `${c.w.sunrise} ${t(z.sunrise)}`, c: 'sky' }, dot,
       { t: '🌇 ', c: 'orange', icon: true }, { t: `${c.w.sunset} ${t(z.sunset)}`, c: 'orange' }, dot,
       { t: '✨ ', c: 'violet', icon: true }, { t: `${c.w.tzeit} ${t(z.tzeit)}`, c: 'violet' },
     ];
